@@ -5,24 +5,37 @@ import re
 
 
 def aggregate_by_track(weekly_data_filename='../data/billboard.csv',
-                                      output_filename='../data/billboard_tracks.csv'):
+                                      output_filename='../data/billboard_tracks.csv',
+                                        pickled_df_name='billboard_tracks.pkl'):
     '''
     INPUT: billboard data at the weekly level (week, artist, song, position)
-    OUTPUT: data file aggregated by track (i.e., song/artist combination)
+    OUTPUT: data file aggregated by track (i.e., song/artist combination), and pickled dataframe
     '''
+    # read in week-level data
     df = pd.read_csv(weekly_data_filename, sep='|', names=['date','pos','song','artist'])
+
     # get rid of rows with artist and song = '-'
     df = df[(df.song != '-') & (df.artist != '-')]
+
     # convert dates from strings to datetime objects
     convert_to_date = (lambda x: datetime.datetime.strptime(x,'%Y-%m-%d').date())
     df.date = df.date.map(convert_to_date)
+
     # adding column of 1's, in order to sum them later for counts
     df['count'] = 1
-    # clean artist and song names, before using them to group data
+
+    # clean artist and song names, before using them to collapse data
     df['artist_clean'] = df.artist.map(clean_strings)
     df['song_clean'] = df.song.map(clean_strings)
+
+    # create dataframe, collapsed by track
     tracks = create_table(df, ['artist_clean', 'song_clean'])
+
+    # save as csv
     tracks.to_csv(output_filename, sep='|')
+
+    # save pickled dataframe
+    tracks.to_pickle('../data/' + pickled_df_name)
 
 
 def clean_strings(txt):
