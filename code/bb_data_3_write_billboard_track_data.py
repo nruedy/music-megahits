@@ -1,12 +1,17 @@
+# -*- coding: utf-8 -*-
 import pandas as pd
 import datetime
 import re
 
 
 
-def aggregate_by_track(weekly_data_filename='../data/billboard.csv',
-                                      output_filename='../data/billboard_tracks.csv',
-                                        pickled_df_name='billboard_tracks.pkl'):
+# set path for input data
+weekly_data_filename='../data/billboard.csv'
+output_filename='../data/billboard_tracks.csv'
+
+
+# TODO: refactor code so that if max_pos or first_year are None, no filtering occurs on that field
+def aggregate_by_track(pickled_df_name='billboard_tracks.pkl', max_pos=200, first_year=1930):
     '''
     INPUT: billboard data at the weekly level (week, artist, song, position)
     OUTPUT: data file aggregated by track (i.e., song/artist combination), and pickled dataframe
@@ -27,6 +32,10 @@ def aggregate_by_track(weekly_data_filename='../data/billboard.csv',
     # clean artist and song names, before using them to collapse data
     df['artist_clean'] = df.artist.map(clean_strings)
     df['song_clean'] = df.song.map(clean_strings)
+
+    # subset df based on maximum position and first year
+    extract_year = (lambda x: x.year)
+    df = df[(df.pos <= max_pos) & (df.date.map(extract_year) >= first_year)]
 
     # create dataframe, collapsed by track
     tracks = create_table(df, ['artist_clean', 'song_clean'])
@@ -50,18 +59,28 @@ def create_table(df, col_list):
     DESC: Groups origingal data by artist and song, calculates summary data, and
         sorts by number of weeks in the top "N"
     '''
-    grouped = df.groupby(col_list).agg({'pos' : [min, max],
-                                        'date' : [min, max],
+    grouped = df.groupby(col_list).agg({'pos' : [min, max, tup],
+                                        'date' : [min, max, tup],
                                         'count' : sum,
                                         'song' : min,
                                         'artist' : min})
 
-    new_df = grouped.reset_index()
-    new_df.columns = ['artist_clean','song_clean','first_wk','last_wk','num_wks',
-                      'artist_orig','min_pos','max_pos','song_orig']
-    return new_df.sort('num_wks', ascending=False)
+    # reset index so that artist and song become columns, and observations are indexed by row number
+    grouped = grouped.reset_index()
+
+    # create new names for columns
+    multi_index = grouped.columns
+    col_names = pd.Index([e[0] + '_' + e[1] if e[1] != '' else e[0] for e in multi_index.tolist()])
+    # the below renames and also converts multi-index for columns to one level
+    grouped.columns = col_names
+    grouped.rename(columns={'count_sum': 'num_wks', 'song_min': 'song_orig', 'artist_min': 'artist_orig'}, inplace=True)
+
+    return grouped.sort_values(by='num_wks', ascending=False)
+
+
+def tup(x):
+    return tuple(x)
 
 
 if __name__ == '__main__':
-    open('../data/billboard_tracks.csv', 'w').close()
     aggregate_by_track()
