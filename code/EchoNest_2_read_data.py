@@ -32,13 +32,67 @@ def load_data(data_dir='../data/echonest/', output_filename='EN_features.pkl', s
             # drop unneeded columns
             # NOTE: doing this after exploding the first level of dicts allows
             # dropping second-level data, such as 'meta'
-            # TODO: Get segment, section, and track data
-            cols_to_drop = ['analysis_url', 'audio_md5', 'meta', 'segments', 'sections', 'track']
+            cols_to_drop = ['analysis_url', 'audio_md5', 'meta', 'track']
             df_row.drop(cols_to_drop, axis=1, inplace=True)
 
-            # loop through lists in 'bars', 'beats' and 'tatums' and save desired data
+            #### loop through lists in 'bars', 'beats' and 'tatums' and save desired data
+
             for analysis_level in ['bars', 'beats', 'tatums']:
                 df_row = calc_list_stats(df_row, analysis_level)
+
+            #### add section data
+
+            section_data = dict()
+            # transform sections (list of dicts) into a dict of lists
+            dict_section_stats = transform_dicts(df_row.sections[0])
+            # count number of sections
+            section_data['num_sections'] = len(df_row.sections[0])
+            # add sd for tempo and loudness
+            for colname in ['tempo', 'loudness']:
+                section_data['section_' + colname + '_sd'] = np.std(dict_section_stats[colname])
+
+            # major = 0; minor = 1
+            # keys {0: 'C', 1: 'Cs', 2: 'D', 3: 'Ds', 4: 'E', 5: 'F', 6: 'Fs', 7: 'G', 8: 'Gs', 9: 'A', 10: 'As', 11: 'B'}
+            distinct_keys = set()
+            for key_mode in zip(dict_section_stats['key'],dict_section_stats['mode']):
+                if key_mode[1]==0:
+                    distinct_keys.add(key_mode[0])
+                else:
+                    distinct_keys.add((key_mode[0] + 3) % 12)
+
+            section_data['num_keys']=len(distinct_keys)
+
+            section_data_df = pd.DataFrame.from_dict([section_data])
+            df_row = pd.concat([df_row, section_data_df], axis=1)
+            df_row.drop('sections', inplace=True, axis=1)
+
+            #### add segment data
+
+            segment_data = dict()
+            # transform segments (list of dicts) into a dict of lists
+            dict_segment_stats = transform_dicts(df_row.segments[0])
+
+            # add sd for loudness
+            segment_data['segment_loudness_sd'] = np.std(dict_segment_stats['loudness_max'])
+
+            # timbre - transpose segment lists so that there are 12 lists - one for each timbre
+            '''
+            Timbres are high level abstractions of the spectral surface, ordered by degree
+            of importance. For completeness, the first dimension represents the average
+            loudness of the segment; second emphasizes brightness; third is more closely
+            correlated to the flatness of a sound; fourth to sounds with a stronger attack; etc.
+            '''
+            timbre_list = np.asarray(dict_segment_stats['timbre']).T.tolist()
+            timbre_count = 1
+            for timbre in timbre_list:
+                segment_data['timbre_{0:02d}_mean'.format(timbre_count)] = np.mean(timbre)
+                segment_data['timbre_{0:02d}_sd'.format(timbre_count)] = np.std(timbre)
+                timbre_count += 1
+
+            segment_data_df = pd.DataFrame.from_dict([segment_data])
+            df_row = pd.concat([df_row, segment_data_df], axis=1)
+            df_row.drop('segments', inplace=True, axis=1)
+
 
             df = df.append(df_row)
 
@@ -53,6 +107,21 @@ def load_data(data_dir='../data/echonest/', output_filename='EN_features.pkl', s
     df_song_type = df['song_type'].str.join(sep='*').str.get_dummies(sep='*')
     df_song_type.rename(columns = lambda x : 'song_type_' + x, inplace=True)
     df = pd.concat([df, df_song_type], axis=1)
+
+    # keys: C, C#, D, D#, E, F, F#, G, G#, A, A#, B
+    # leaving out 'B' to have n-1 dummies
+    keys_dict = {0: 'C', 1: 'Cs', 2: 'D', 3: 'Ds', 4: 'E', 5: 'F',
+                 6: 'Fs', 7: 'G', 8: 'Gs', 9: 'A', 10: 'As'}
+
+    for k, v in keys_dict.iteritems():
+        df['key_' + v] = df.key == k
+
+    #create dummies for time signatures
+    df['time_sig_4'] = df.time_signature == 4
+    df['time_sig_3'] = df.time_signature == 3
+    df['time_sig_1'] = df.time_signature == 1
+    df['time_sig_5'] = df.time_signature == 5
+    df['time_sig_7'] = df.time_signature == 7
 
     # pickle dataframe
     df.to_pickle('../data/' + output_filename)
