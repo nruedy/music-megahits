@@ -1,4 +1,5 @@
 import pandas as pd
+import bb_data_3_write_billboard_track_data as bb_tracks
 
 
 
@@ -19,7 +20,7 @@ def merge_datasets(billboard_pickle='../data/billboard_tracks.pkl',
     df = pd.merge(billboard, echonest,
                   left_on=['merge_column'],
                   right_on=['filename'],
-                  how='outer')
+                  how='inner')
 
     # drop unneeded columns
     df.drop(['merge_column'], inplace=True, axis=1)
@@ -29,4 +30,15 @@ def merge_datasets(billboard_pickle='../data/billboard_tracks.pkl',
 
 
 if __name__ == '__main__':
-    merge_datasets()
+    # below, change subset position and subset year to change the filtering of the data
+    subset_pos = 100
+    subset_year = 1955
+    # adjust output pickle name accordingly
+    billboard_pickle = 'billboard_tracks_pos{0}_yr{1}.pkl'.format(subset_pos, subset_year)
+
+    # run program to collapse filtered billboard data by track, and save as pickled df
+    bb_tracks.aggregate_by_track(pickled_df_name=billboard_pickle, max_pos=subset_pos, first_year=subset_year)
+
+    # merge filtered Billboard data with Echo Nest data
+    merge_datasets(billboard_pickle='../data/'+billboard_pickle,
+                   output_filename='BB_{0}_{1}_EN_merged.pkl'.format(subset_pos, subset_year))
