@@ -12,13 +12,13 @@ config.CALL_TIMEOUT = timeout_sec
 
 
 
-def get_API_data(start=0, end=None, input_filename='../data/billboard_tracks.csv'):
+def get_API_data(start=0, end=None, input_filename='../data/billboard_tracks.pkl'):
     '''
     INPUT: path to billboard data
     OUTPUT: None
     DESC: Calls EchoNest API to get track data
     '''
-    df = pd.read_csv(input_filename, sep='|')
+    df = pd.read_pickle(input_filename)
 
     filenames = generate_filenames(df)
 
