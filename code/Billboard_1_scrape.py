@@ -1,17 +1,21 @@
 import requests
 import datetime
+import time
 
 
-def get_content_from_urls():
+
+todays_date=datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d')
+
+def get_content_from_urls(first_date='1940-07-20', last_date=todays_date):
     '''
-    INPUTS: None
+    INPUTS: first_date (string), last_date (string)
     OUTPUTS: None
     DESC: Writes text files with html content containing billboard data.
-        These are parsed in 'interpret_scraped_files.py'.
+    The earliest date in the data is '1940-07-20'.
     '''
     index = 'http://www.umdmusic.com/default.asp?Lang=English&Chart=D'
-    cur_date = datetime.datetime.strptime('2015-12-05','%Y-%m-%d').date()
-    earliest_date = datetime.datetime.strptime('1940-07-20','%Y-%m-%d').date()
+    cur_date = datetime.datetime.strptime(last_date,'%Y-%m-%d').date()
+    earliest_date = datetime.datetime.strptime(first_date,'%Y-%m-%d').date()
     iter_week = datetime.timedelta(days=7)
 
     while cur_date >= earliest_date:
@@ -27,4 +31,7 @@ def get_content_from_urls():
 
 
 if __name__ == '__main__':
-    get_content_from_urls()
+    # to update with latest data, set first_date to the first week of missing data,
+    # and last_date to the date of last available data
+    get_content_from_urls(first_date='2015-12-12', last_date='2016-1-02')
+
