@@ -29,17 +29,22 @@ def aggregate_by_track(pickled_df_name='billboard_tracks.pkl', max_pos=200, firs
     # adding column of 1's, in order to sum them later for counts
     df['count'] = 1
 
-    # clean artist and song names as I did in the previous round, to create the same filenames I had
-    # I will use the mapping from previous filename to current filename to rename EN and Lyrics files
-    df['prev_artist_clean'] = df.artist.map(prev_clean_strings)
-    df['prev_song_clean'] = df.song.map(prev_clean_strings)
-    df['prev_filename'] = df.prev_artist_clean + '___' + df.prev_song_clean
-
     # clean artist and song names, before using them to collapse data
     df['artist_clean'] = df.artist.map(clean_strings)
     df['song_clean'] = df.song.map(clean_strings).map(fix_song_typos)
 
     df['filename'] = df.artist_clean + '___' + df.song_clean
+
+    # clean artist and song names as I did in the previous round, to create the same filenames I had
+    # I will use the mapping from previous filename to current filename to rename EN and Lyrics files
+    df['prev_artist_clean'] = df.artist.map(prev_clean_strings)
+    df['prev_song_clean'] = df.song.map(prev_clean_strings)
+    df['prev_filename'] = df.prev_artist_clean + '___' + df.prev_song_clean
+    # save old and new filenames to use when cleaning up EN files
+    filenames = df.groupby(['prev_filename']).agg({'filename' : min})
+    filenames.rename(columns={'filename_min': 'filename'}, inplace=True)
+    filenames.reset_index(inplace=True)
+    filenames.to_pickle('../data/filename_conversion.pkl')
 
     # subset df based on maximum position and first year
     extract_year = (lambda x: x.year)
