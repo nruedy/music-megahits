@@ -3,7 +3,7 @@ import datetime
 import codecs
 
 
-def write_billboard_data(output_filename, start_date='1940-07-20', end_date='2015-12-05'):
+def write_billboard_data(output_filename, start_date='1940-07-20', end_date='2016-01-02'):
     '''
     INPUTS: csv filename
     OUTPUTS: csv
