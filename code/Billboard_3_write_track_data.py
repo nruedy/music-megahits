@@ -68,11 +68,14 @@ def clean_strings(txt):
     invalid_punc = '[!"#$%&\'()*+,-./:;<=>?@[\\]^`{|}~§]'
     txt = re.sub(invalid_punc, '', txt)
     # remove 'a', 'the', and extraneous white space
-    txt = ' '.join([word for word in txt.split() if word.lower() not in ['the', 'a']])
-    return txt
+    # check first if txt has more than one word, because there is an artist called "A"
+    if len(txt.split()) == 1:
+        return ' '.join(txt.split())
+    else:
+        return ' '.join([word for word in txt.split() if word.lower() not in ['the', 'a']])
 
 def fix_song_typos(txt):
-    txt.replace('Livin On A Prayer', 'Living On A Prayer')
+    txt.replace('Livin On Prayer', 'Living On Prayer')
     txt.replace('Im Comin Over', 'Im Coming Over')
     txt.replace('Youre Lookin Good', 'Youre Looking Good')
     txt.replace('Im Livin In Shame', 'Im Living In Shame')
