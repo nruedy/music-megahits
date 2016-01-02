@@ -1,5 +1,5 @@
 import pandas as pd
-import bb_data_3_write_billboard_track_data as bb_tracks
+import Billboard_3_write_track_data as bb_tracks
 
 
 
@@ -14,16 +14,13 @@ def merge_datasets(billboard_pickle='../data/billboard_tracks.pkl',
     echonest = pd.read_pickle(echonest_pickle)
 
     billboard = pd.read_pickle(billboard_pickle)
-    billboard['merge_column'] = billboard.artist_clean + '___' + billboard.song_clean
+    #billboard['merge_column'] = billboard.artist_clean + '___' + billboard.song_clean
 
     # merge data sets
     df = pd.merge(billboard, echonest,
-                  left_on=['merge_column'],
+                  left_on=['filename'],
                   right_on=['filename'],
                   how='inner')
-
-    # drop unneeded columns
-    df.drop(['merge_column'], inplace=True, axis=1)
 
     df.to_pickle('../data/' + output_filename)
 

@@ -2,6 +2,8 @@
 import pandas as pd
 import datetime
 import re
+import Billboard_3a_clean_track_data_16_01_01 as previous_cleaning
+import Billboard_3a_clean_track_data_16_01_01b as current_cleaning
 
 
 
@@ -30,23 +32,21 @@ def aggregate_by_track(pickled_df_name='billboard_tracks.pkl', max_pos=200, firs
     df['count'] = 1
 
     # clean artist and song names, before using them to collapse data
-    df['artist_clean'] = df.artist.map(clean_strings)
-    df['song_clean'] = df.song.map(clean_strings).map(fix_song_typos)
+    df['artist_clean'] = df.artist.map(current_cleaning.clean_artist)
+    df['song_clean'] = df.song.map(current_cleaning.clean_song)
 
     df['filename'] = df.artist_clean + '___' + df.song_clean
 
-    # Note: Use below lines only after refining the way the tracks data are collapsed
-    #       To do this, need to update prev_clean_strings to whatever the previous version did
-    # # clean artist and song names as I did in the previous round, to create the same filenames I had
-    # # I will use the mapping from previous filename to current filename to rename EN and Lyrics files
-    # df['prev_artist_clean'] = df.artist.map(prev_clean_strings)
-    # df['prev_song_clean'] = df.song.map(prev_clean_strings)
-    # df['prev_filename'] = df.prev_artist_clean + '___' + df.prev_song_clean
-    # # save old and new filenames to use when cleaning up EN files
-    # filenames = df.groupby(['prev_filename']).agg({'filename' : min})
-    # filenames.rename(columns={'filename_min': 'filename'}, inplace=True)
-    # filenames.reset_index(inplace=True)
-    # filenames.to_pickle('../data/filename_conversion.pkl')
+    # Create a mapping from previous filename to current filename to rename EN and Lyrics files
+    # Note: need to update the filenames in the import statements
+    df['prev_artist_clean'] = df.artist.map(previous_cleaning.clean_artist)
+    df['prev_song_clean'] = df.song.map(previous_cleaning.clean_song)
+    df['prev_filename'] = df.prev_artist_clean + '___' + df.prev_song_clean
+    # save old and new filenames to use when cleaning up EN files
+    filenames = df.groupby(['prev_filename']).agg({'filename' : min})
+    filenames.rename(columns={'filename_min': 'filename'}, inplace=True)
+    filenames.reset_index(inplace=True)
+    filenames.to_pickle('../data/filename_conversion.pkl')
 
     # subset df based on maximum position and first year
     extract_year = (lambda x: x.year)
@@ -61,68 +61,6 @@ def aggregate_by_track(pickled_df_name='billboard_tracks.pkl', max_pos=200, firs
     # save pickled dataframe
     tracks.to_pickle('../data/' + pickled_df_name)
 
-
-# def prev_clean_strings(txt):
-#     invalid_punc = '[!"#$%&\'()*+,-./:;<=>?@[\\]^`{|}~§]'
-#     return re.sub(invalid_punc, '', txt)
-
-def clean_strings(txt):
-    invalid_punc = '[!"#$%&\'()*+,-./:;<=>?@[\\]^`{|}~§]'
-    txt = re.sub(invalid_punc, '', txt)
-    # remove 'a', 'the', and extraneous white space
-    # check first if txt has more than one word, because there is an artist called "A"
-    if len(txt.split()) == 1:
-        return ' '.join(txt.split())
-    else:
-        return ' '.join([word for word in txt.split() if word.lower() not in ['the', 'a']])
-
-def fix_song_typos(txt):
-    txt.replace('Livin On Prayer', 'Living On Prayer')
-    txt.replace('Im Comin Over', 'Im Coming Over')
-    txt.replace('Youre Lookin Good', 'Youre Looking Good')
-    txt.replace('Im Livin In Shame', 'Im Living In Shame')
-    txt.replace('You Cant Missing Nothing That You Never Had', 'You Cant Miss Nothing That You Never Had')
-    txt.replace('Livin It Up', 'Living It Up')
-    txt.replace('Feelin Alright', 'Feeling Alright')
-    txt.replace('Hold On For Dear Love', 'Holdin On For Dear Love')
-    txt.replace('Walking After Midnight', 'Walkin After Midnight')
-    txt.replace('Your Bodys Callin', 'Your Bodys Calling')
-    txt.replace('Twistin The Night Away', 'Twisting The Night Away')
-    txt.replace('Why Im Walkin', 'Why Im Walking')
-    txt.replace('These Things Will Keep Me Lovin You', 'These Things Will Keep Me Loving You')
-    txt.replace('You Keep Me Hangin On', 'You Keep Me Hanging On')
-    txt.replace('Sausilito', 'Sausalito')
-    txt.replace('Gorver Henson Feels Forgotten', 'Grover Henson Feels Forgotten')
-    txt.replace('Fraulein', 'Freulein')
-    txt.replace('Pass The Curvoisier Part II', 'Pass The Courvoisier Part II')
-    txt.replace('Stop Look What Your Doing', 'Stop Look What Youre Doing')
-    txt.replace('Show Me What Im Loking For', 'Show Me What Im Looking For')
-    txt.replace('My Favourite Girl', 'My Favorite Girl')
-    txt.replace('YesSireEe', 'YesSirEe')
-    txt.replace('Sweet Potatoe Pie', 'Sweet Potato Pie')
-    txt.replace('Bonnie Came Back', 'Bonnie Come Back')
-    txt.replace('Lonesom', 'Lonesome')
-    txt.replace('Cruisng Down The River', 'Cruising Down The River')
-    txt.replace('Loosing Your Love', 'Losing Your Love')
-    txt.replace('Neighbor Neighbor', 'Neighbour Neighbour')
-    txt.replace('Cheryl Moana Marie', 'Cheryl Mona Marie')
-    txt.replace('Birthday Suite', 'Birthday Suit')
-    txt.replace('Summer Souveniers', 'Summer Souvenirs')
-    txt.replace('Never Leave You Uh Oooh Uh Oooh', 'Never Leave You Uh Ooh Uh Oooh')
-    txt.replace('Harder To Breath', 'Harder To Breathe')
-    txt.replace('More Then You Know', 'More Than You Know')
-    txt.replace('Figuered You Out', 'Figured You Out')
-    txt.replace('Shake Your Grove Thing', 'Shake Your Groove Thing')
-    txt.replace('Ill Be Seing You', 'Ill Be Seeing You')
-    txt.replace('Da Ya Think Im Sexy', 'Do Ya Think Im Sexy')
-    txt.replace('Ring Dang Do', 'Ring Dang Doo')
-    txt.replace('Early Morning Live', 'Early Morning Love')
-    txt.replace('I Will Rememeber You', 'I Will Remember You')
-    txt.replace('Summer Sweatheart', 'Summer Sweetheart')
-    txt.replace('Speedoo', 'Speedo')
-    txt.replace('The Angeles Listened In', 'The Angels Listened In')
-    txt.replace('Souveniers', 'Souvenirs')
-    return txt
 
 
 def create_table(df, col_list):
