@@ -35,16 +35,18 @@ def aggregate_by_track(pickled_df_name='billboard_tracks.pkl', max_pos=200, firs
 
     df['filename'] = df.artist_clean + '___' + df.song_clean
 
-    # clean artist and song names as I did in the previous round, to create the same filenames I had
-    # I will use the mapping from previous filename to current filename to rename EN and Lyrics files
-    df['prev_artist_clean'] = df.artist.map(prev_clean_strings)
-    df['prev_song_clean'] = df.song.map(prev_clean_strings)
-    df['prev_filename'] = df.prev_artist_clean + '___' + df.prev_song_clean
-    # save old and new filenames to use when cleaning up EN files
-    filenames = df.groupby(['prev_filename']).agg({'filename' : min})
-    filenames.rename(columns={'filename_min': 'filename'}, inplace=True)
-    filenames.reset_index(inplace=True)
-    filenames.to_pickle('../data/filename_conversion.pkl')
+    # Note: Use below lines only after refining the way the tracks data are collapsed
+    #       To do this, need to update prev_clean_strings to whatever the previous version did
+    # # clean artist and song names as I did in the previous round, to create the same filenames I had
+    # # I will use the mapping from previous filename to current filename to rename EN and Lyrics files
+    # df['prev_artist_clean'] = df.artist.map(prev_clean_strings)
+    # df['prev_song_clean'] = df.song.map(prev_clean_strings)
+    # df['prev_filename'] = df.prev_artist_clean + '___' + df.prev_song_clean
+    # # save old and new filenames to use when cleaning up EN files
+    # filenames = df.groupby(['prev_filename']).agg({'filename' : min})
+    # filenames.rename(columns={'filename_min': 'filename'}, inplace=True)
+    # filenames.reset_index(inplace=True)
+    # filenames.to_pickle('../data/filename_conversion.pkl')
 
     # subset df based on maximum position and first year
     extract_year = (lambda x: x.year)
@@ -60,9 +62,9 @@ def aggregate_by_track(pickled_df_name='billboard_tracks.pkl', max_pos=200, firs
     tracks.to_pickle('../data/' + pickled_df_name)
 
 
-def prev_clean_strings(txt):
-    invalid_punc = '[!"#$%&\'()*+,-./:;<=>?@[\\]^`{|}~§]'
-    return re.sub(invalid_punc, '', txt)
+# def prev_clean_strings(txt):
+#     invalid_punc = '[!"#$%&\'()*+,-./:;<=>?@[\\]^`{|}~§]'
+#     return re.sub(invalid_punc, '', txt)
 
 def clean_strings(txt):
     invalid_punc = '[!"#$%&\'()*+,-./:;<=>?@[\\]^`{|}~§]'
@@ -135,7 +137,6 @@ def create_table(df, col_list):
                                         'count' : sum,
                                         'song' : min,
                                         'artist' : min,
-                                        'prev_filename' : min,
                                         'filename' : min})
 
     # reset index so that artist and song become columns, and observations are indexed by row number
@@ -149,7 +150,6 @@ def create_table(df, col_list):
     grouped.rename(columns={'count_sum': 'num_wks',
                             'song_min': 'song_orig',
                             'artist_min': 'artist_orig',
-                            'prev_filename_min': 'prev_filename',
                             'filename_min': 'filename'
                             }, inplace=True)
 
