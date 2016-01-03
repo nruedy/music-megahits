@@ -2,7 +2,7 @@ import json
 import pandas as pd
 import datetime
 import time
-import os.path
+import os, os.path
 import requests
 from pyechonest import config
 from pyechonest import song
@@ -20,32 +20,32 @@ def get_API_data(start=0, end=None, input_filename='../data/billboard_tracks.pkl
     '''
     df = pd.read_pickle(input_filename)
 
-    filenames = generate_filenames(df)
-
-    track_info = zip(df.artist_orig.values, df.song_orig.values, filenames)
+    track_info = zip(df.artist_orig.values, df.song_orig.values, df.filename.values)
     # get subset of data for searches
     track_info = track_info[ start : end ]
 
     # get current time stamp for error log
     tmstmp = datetime.datetime.fromtimestamp(time.time()).strftime("%Y-%m-%d___%H-%M-%S")
 
+    count = 0
+    tot_num_files = len(track_info)
+    EN_path = '../data/echonest/'
+    downloaded = len(os.walk(EN_path).next()[2])
+    downloaded_start = downloaded
+
     for track_tuple in track_info:
-        call_EN_API(track_tuple[0], track_tuple[1], track_tuple[2], tmstmp)
+        call_EN_API(track_tuple[0], track_tuple[1], track_tuple[2], tmstmp, count)
+        if count % 20 == 0:
+            downloaded_prev = downloaded
+            downloaded = len(os.walk(EN_path).next()[2])
+            print '{0} / {1}, {2} just added, {3} new so far'.format(count,
+                                                                     tot_num_files,
+                                                                     downloaded - downloaded_prev,
+                                                                     downloaded - downloaded_start)
+        count += 1
 
 
-def generate_filenames(df):
-    '''
-    INPUT: DataFrame
-    OUTPUT: list of filenames as strings
-    '''
-    artist_clean_list = df.artist_clean.values
-    song_clean_list = df.song_clean.values
-
-    return ['{0}___{1}'.format(artist, song) for artist, song
-                            in zip(artist_clean_list, song_clean_list)]
-
-
-def call_EN_API(artist, song_name, filename, tmstmp):
+def call_EN_API(artist, song_name, filename, tmstmp, count):
     '''
     INPUTS: artist and song search terms
     OUTPUTS: None
@@ -62,15 +62,41 @@ def call_EN_API(artist, song_name, filename, tmstmp):
     if os.path.exists(null_filepath):
         return
 
+    search_results = []
+
     try:
         search_results = song.search(artist=artist, title=song_name, buckets=['song_hotttnesss'])
     except Exception as inst:
-        print "Exception: ", inst
+        print "Exception (basic search):", inst, "ID#:", count
         with open('../data/echonest_error_logs/echonest_errors.csv', 'a') as outfile:
             outfile.write(artist + '`' + song_name + '`' + 'Exc 1: ' + str(inst) +
                             '`' + tmstmp + '\n')
         time.sleep(1.0/3.0)
-        return
+
+    if search_results == []:
+        feat_index = artist.lower().find(' feat')
+        if feat_index != -1:
+            try:
+                search_results = song.search(artist=artist[:feat_index], title=song_name, buckets=['song_hotttnesss'])
+            except Exception as inst:
+                print "Exception (feat): ", inst, "ID#:", count
+                with open('../data/echonest_error_logs/echonest_errors.csv', 'a') as outfile:
+                    outfile.write(artist + '`' + song_name + '`' + 'Exc 1 (feat): ' + str(inst) +
+                                    '`' + tmstmp + '\n')
+                time.sleep(1.0/3.0)
+
+    if search_results == []:
+        paren_index = song_name.find(' (')
+        if paren_index != -1:
+            try:
+                search_results = song.search(artist=artist, title=song_name[:paren_index], buckets=['song_hotttnesss'])
+            except Exception as inst:
+                print "Exception (paren): ", inst, "ID#:", count
+                with open('../data/echonest_error_logs/echonest_errors.csv', 'a') as outfile:
+                    outfile.write(artist + '`' + song_name + '`' + 'Exc 1 (paren): ' + str(inst) +
+                                    '`' + tmstmp + '\n')
+                time.sleep(1.0/3.0)
+
 
     if search_results == []:
         with open(error_filepath, 'a') as outfile:
@@ -108,7 +134,7 @@ def call_EN_API(artist, song_name, filename, tmstmp):
             json.dump(results, outfile)
 
     except Exception as inst:
-        print "Exception: ", inst
+        print "Exception (write): ", inst, "ID#:", count
         with open('../data/echonest_error_logs/echonest_errors.csv', 'a') as outfile:
             outfile.write(artist + '`' + song_name + '`' + 'Exc 2: ' + str(inst) +
                             '`' + tmstmp + '\n')
@@ -119,4 +145,6 @@ def call_EN_API(artist, song_name, filename, tmstmp):
 
 
 if __name__ == '__main__':
+    get_API_data()
+    get_API_data()
     get_API_data()
