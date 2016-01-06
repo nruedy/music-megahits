@@ -23,7 +23,7 @@ if __name__ == '__main__':
     and last_date to the date of last available data.
     The program adds text files for each new week -- no need to re-scape previous weeks.
     '''
-    BB_1.get_content_from_urls(first_date='2015-12-12', last_date='2016-1-02')
+    #BB_1.get_content_from_urls(first_date='2015-12-12', last_date='2016-1-02')
 
 
     '''
@@ -33,8 +33,8 @@ if __name__ == '__main__':
     Note: The script appends to the file, so the line below erases the file contents,
     avoiding duplicates.
     '''
-    open('../data/billboard.csv', 'w').close()
-    BB_2.write_billboard_data('../data/billboard.csv')
+    #open('../data/billboard.csv', 'w').close()
+    #BB_2.write_billboard_data('../data/billboard.csv')
 
 
     '''
@@ -70,12 +70,12 @@ if __name__ == '__main__':
     Tries several different ways of searching on artist and song, because the
     match-up is imperfect. Currently at 77% matching.
     '''
-    EN_1.get_API_data(start=0, end=None, input_filename='../data/billboard_tracks.pkl')
+    #EN_1.get_API_data(start=0, end=None, input_filename='../data/billboard_tracks.pkl')
 
 
     '''
     Write Echo Nest data to DataFrame (pickled)
-    Time: 40-60 min
+    Time: 60 min
 
     Pulls out the desired features from the Echo Nest .json files, and performs feature
     engineering (e.g., calculating the variance for bar duration, and creating dummies
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     Searches SongLyrics.com, and then Lyrics.com based on artist and song. Tries several
     different searches, because the match-up is imperfect.
     '''
-    L_1.get_lyrics(start=0, end=None, input_filename='../data/billboard_tracks.pkl')
+    #L_1.get_lyrics(start=0, end=None, input_filename='../data/billboard_tracks.pkl')
 
 
     '''

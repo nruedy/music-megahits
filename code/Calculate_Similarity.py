@@ -25,11 +25,11 @@ def sim_calc(df, colnames_list):
                                                    / np.std(comparison_data.ix[:, i])
         if row % 10 == 0:
             print '{0} records processed'.format(row)
-    pd.to_pickle(new_df, '../data/BB_100_1955_EN_merged_sim.pkl')
+    pd.to_pickle(new_df, '../data/BB_100_1955_EN_L_merged_sim.pkl')
 
 
 if __name__ == '__main__':
-    input_data = '../data/BB_100_1955_EN_merged.pkl'
+    input_data = '../data/BB_100_1955_EN_L_merged.pkl'
     df = pd.read_pickle(input_data)
 
     col_list = ['energy',

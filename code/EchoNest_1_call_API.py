@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 import pandas as pd
 import datetime
@@ -193,6 +194,4 @@ def get_API_data(start=0, end=None, input_filename='../data/billboard_tracks.pkl
 
 
 if __name__ == '__main__':
-    get_API_data()
-    get_API_data()
     get_API_data()
