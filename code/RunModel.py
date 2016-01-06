@@ -9,11 +9,10 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import roc_auc_score
+from sklearn.ensemble.partial_dependence import plot_partial_dependence
 
 
-
-def run_logit_num_wks(df, X_col_names, max_predictors_to_print=None,
-                      threshold_high=20, threshold_low=3):
+def prep_data(df, X_col_names, threshold_high=20, threshold_low=3):
     # create dichotomous target for number of weeks
     df['wks_class'] = df.num_wks.apply(lambda x: wks_bucket(x, threshold_high, threshold_low))
     # select observations that have a target
@@ -27,22 +26,45 @@ def run_logit_num_wks(df, X_col_names, max_predictors_to_print=None,
     # prepare predictors and target for model by scaling and splitting into test-train sets
     y = df_model.wks_class
     X = df_model[X_col_names]
-    X_train, X_test, y_train, y_test = standardize_and_split(X, y)
 
-    lr = LogisticRegression(class_weight='auto')
-    lr.fit(X_train, y_train)
-    y_prob = lr.predict_proba(X_test)[:, 1]
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2, random_state=42)
+    raw_scaler = StandardScaler()
+    raw_scaler.fit(X_train)
+    X_train = raw_scaler.transform(X_train)
+    X_test = raw_scaler.transform(X_test)
+    return X_train, X_test, y_train, y_test
+
+
+def run_model(clf, X_train, X_test, y_train, y_test):
+    clf.fit(X_train, y_train)
+    y_prob = clf.predict_proba(X_test)[:, 1]
     auc_ = roc_auc_score(y_test, y_prob)
-    print 'Accuracy: ', lr.score(X_test, y_test)
+    print 'Accuracy: ', clf.score(X_test, y_test)
     print 'AUC:', auc_
-    print ''
+    return clf
 
-    coef_importance = sorted(zip(X_col_names, list(lr.coef_[0])), key=getKey)
 
+def logit_results(clf, X_col_names, max_predictors_to_print=None):
+
+    coef_importance = sorted(zip(X_col_names, list(clf.coef_[0])), key=getKey)
+
+    print 'Top predictors:'
     for coef in coef_importance[: max_predictors_to_print]:
         print '{0}: {1:.3f}'.format(coef[0], coef[1])
 
     return coef_importance
+
+
+def grad_boost_classifier_results(clf, X_train, X_col_names, num_top_features=10):
+    importances = pd.Series(clf.feature_importances_, index=X_col_names)
+    importances.sort(ascending=False)
+
+    top_feat_import = importances.head(num_top_features).index.values
+    top_feat_import_indices = [list(X_col_names).index(feat) for feat in top_feat_import]
+
+    fig,axs = plot_partial_dependence(clf, X_train, top_feat_import_indices, feature_names=X_col_names)
+    fig.set_size_inches(10,15)
+    plt.show()
 
 
 def wks_bucket(num_wks, threshold_high, threshold_low):
@@ -52,13 +74,6 @@ def wks_bucket(num_wks, threshold_high, threshold_low):
         return 0
     return None
 
-def standardize_and_split(X, y):
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2, random_state=42)
-    raw_scaler = StandardScaler()
-    raw_scaler.fit(X_train)
-    X_train = raw_scaler.transform(X_train)
-    X_test = raw_scaler.transform(X_test)
-    return X_train, X_test, y_train, y_test
 
 def getKey(item):
     return -abs(item[1])
