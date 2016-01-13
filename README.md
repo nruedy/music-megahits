@@ -1,21 +1,45 @@
 ## Music Megahits
 
-In this project, I analyze audio features of hit pop songs in order to answer the question of what makes certain hit pop songs stay on the charts week after week while others drop off. I also wondered if it is advantageous for a song to be right on trend with what is popular, or to be distinctive and differentiate itself with a different sound.
+In this project, I analyze audio features of hit pop songs in order to answer the question of what makes certain hit pop songs stay on the charts week after week while others drop off. I also explored whether it is advantageous for a song to be right on trend with what is popular, or to be distinctive and differentiate itself with a different sound.
 
-To begin to answer these questions, I used the following packages for my data collection and analysis:
 
-1. I scraped data from the Billboard Top 100 Pop singles chart.
-2. I cleaned the data. This was important because songs and artists were sometimes listed in two different ways (e.g., "Living on a Prayer" vs. "Livin' on a Prayer".) I then aggregated the data based on a combination of Artist and Song to get a count of how many weeks each song was in the charts.
-3. I defined a hit as a song that was on the charts for more than 20 weeks, and a flop as one that was on for five weeks or fewer. I also restricted the data set to the years 1980-2005, because this was a period where the ratio of hits to flops was fairly stable. In all, I had just over 2500 songs for my analysis.
-4. For the audio features, I used Echo Nest’s API, which provides an extensive list of features available by song. EN data comes in JSON format. I parsed these files to pull out audio features for each song, such as the key and time signature. EN also provides ML assessments on a song’s qualities such as danceability and positivity. I also engineered two additional sets of features:
-    - I calculated the degree of change within a song, for instance in tempo and volume.
-    - I calculated how different the song was on each of the features from other songs on the chart in the same weeks.
-5. I compared the results of several machine learning algorithms. Gradient Boosting fit the best, with an ROC-AUC score of .70. Looking at the top five predictors, it’s interesting to note that four out of the five are relative features. These are the ‘black sheep’ features I engineered to measure how similar or different a song is on that feature, so it appears putting them into context might be helpful.
+### Data Collection
 
-To examine these features in a little more depth, we can look at the partial dependence plots. Basically, the curve is above zero for the values of the feature for which the model would predict that a song is a hit.
+#### Billboard Data
+![alt text](https://github.com/nruedy/music-megahits/images/Billboard.png "Billboard Logo")
+1. I built a scraper for the Billboard Top 100 Pop singles chart.
 
-Looking at the first one, being low on “instrumentalness” (that is, having singing) appears to be favorable. Singing is good – no surprises there.
+2. I cleaned the data extensively. This was important because songs and artists were often listed in two different ways (e.g., "Living on a Prayer" vs. "Livin' on a Prayer".)
 
-Low values of rhythmic simplicity are good, which means having some syncopations or other rhythmic variations is probably a good thing.
+3. I aggregated the data based on a combination of artist and song to get a count of how many weeks each song was in the charts.
 
-And lastly, sad songs appear to be doing well.
+4. I defined a hit as a song that was on the charts for more than 20 weeks, and a flop as one that was on for five weeks or fewer. I also restricted the data set to the years 1980-2005, because this was a period where the ratio of hits to flops was fairly stable.
+
+#### Echo Nest Data
+![alt text](https://github.com/nruedy/music-megahits/images/EchoNest.png "Echo Nest Logo")
+1. For the audio features, I used Echo Nest’s API, which provides an extensive list of features available by song. For a search on Echo Nest's API to produce a result, both the song and artist names must match. Unfortunately, Echo Nest and Billboard often list songs and artists differently, and if either does not match, the search will be unsuccessful. To address this, the module I wrote to call Echo Nest's API tries a number of transformations on the song and artist name from Billboard. For instance, if searching for a song/artist combination does not produce any results, the module will try variations on the song and artist name, for instance, removing 'the' or 'a' if they are present. In other words, if the artist "Eminem" and the song "*The* Real Slim Shady" does not produce any results, the program will also search for "Eminem" and "Real Slim Shady." By trying a number of different transformations, of the approximately 34,000 tracks I searched, I was able to find Echo Nest data for 84%.
+
+2. Echo Nest features are produced using machine learning algorithms. They cover both straightforward aspects of the song, such as the key and time signature, as well as assessments of a song’s more subjective qualities such as danceability and positivity. Echo Nest data comes in JSON format. I parsed these files to extract audio features for each song.
+
+### Feature Engineering
+To supplement the Echo Nest features, I calculated two sets of additional features:
+
+* **Change:** I calculated the degree of change within a song, for instance in tempo and volume. I did this by calculating the standard deviation of measures that were taken repeatedly. For instance, the change in tempo is measured by calculating the standard deviation of the length in seconds of each bar in the song.
+
+* **Distinctiveness:** I calculated how different the song was on each of the features from other songs that were popular during the same time. First, I identified a “cohort” for each song, i.e., a list of other songs that were on the charts during the same weeks. Then I normalized the song's features using the mean and standard deviation of these features.
+
+### Modelling
+
+My final data set contained just over 2500 songs. I compared the results of several machine learning algorithms. Gradient Boosting fit the best, with an ROC-AUC score of .70. Looking at the top five predictors, it’s interesting to note that four out of the five are relative features. These are the ‘black sheep’ features I engineered to measure how similar or different a song is on that feature, so it appears putting them into context might be helpful.
+
+To examine these features in a little more depth, we can look at the partial dependence plots. The curve is above zero for the values of the feature for which the model would predict that a song is a hit.
+
+
+### Libraries Used
+* Pandas
+* Numpy
+* Scipy
+* Scikit-learn
+* Statsmodels
+* Beautiful Soup
+* Matplotlib
