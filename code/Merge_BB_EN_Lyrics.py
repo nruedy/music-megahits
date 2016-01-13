@@ -1,3 +1,8 @@
+'''
+Merges Billboard, Echo Nest, and Lyrics data sets, and writes to a pickled dataframe.
+'''
+
+
 import pandas as pd
 import Billboard_3_write_track_data as BB_3
 
@@ -10,7 +15,8 @@ def merge_datasets(billboard_pickle='../data/billboard_tracks.pkl',
     '''
     INPUTS: Path to pickled Billboard and EchoNest DataFrames, filename for pickled merged file
     OUTPUTS: None
-    DESC: Merges Billboard data with EchoNest features, and pickles resulting dataframe
+
+    Merges Billboard data with EchoNest features, and pickles resulting dataframe
     '''
     echonest = pd.read_pickle(echonest_pickle)
     # create dummy to use to indicate if there is EN data for a given record

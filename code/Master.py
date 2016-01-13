@@ -1,3 +1,11 @@
+'''
+This script provides an outline for the all the code that collects, cleans, and
+prepares data for analysis.
+
+Approximate run times are provided in comments.
+'''
+
+
 import Billboard_1_scrape as BB_1
 import Billboard_2_write_weekly_data as BB_2
 import Billboard_3_write_track_data as BB_3
@@ -23,7 +31,7 @@ if __name__ == '__main__':
     and last_date to the date of last available data.
     The program adds text files for each new week -- no need to re-scape previous weeks.
     '''
-    #BB_1.get_content_from_urls(first_date='2015-12-12', last_date='2016-1-02')
+    BB_1.get_content_from_urls(first_date='2015-12-12', last_date='2016-1-02')
 
 
     '''
@@ -33,8 +41,8 @@ if __name__ == '__main__':
     Note: The script appends to the file, so the line below erases the file contents,
     avoiding duplicates.
     '''
-    #open('../data/billboard.csv', 'w').close()
-    #BB_2.write_billboard_data('../data/billboard.csv')
+    open('../data/billboard.csv', 'w').close()
+    BB_2.write_billboard_data('../data/billboard.csv')
 
 
     '''
@@ -43,8 +51,8 @@ if __name__ == '__main__':
 
     This file collapses the Billboard data based on a unique song & artist combination
     It cleans/standardizes the strings for artist and song first. This is important,
-    because otherwise one song would be considered two songs by the data, and the
-    number of weeks that song was in the charts would be divided between the two entries.
+    because otherwise one song would have two separate entries in the data, and the
+    number of weeks that song was in the charts would be divided between those two entries.
 
     Each unique song-artist combination is used as a filename in later scripts which
     scrape for Echo Nest data and song lyrics. In case cleaning of the Billboard data
@@ -68,9 +76,9 @@ if __name__ == '__main__':
 
     Calls Echo Nest API for each track and saves audio data for each as a .json file.
     Tries several different ways of searching on artist and song, because the
-    match-up is imperfect. Currently at 77% matching.
+    match-up is imperfect. Currently at 84% matching.
     '''
-    #EN_1.get_API_data(start=0, end=None, input_filename='../data/billboard_tracks.pkl')
+    EN_1.get_API_data(start=0, end=None, input_filename='../data/billboard_tracks.pkl')
 
 
     '''
@@ -93,7 +101,7 @@ if __name__ == '__main__':
     Searches SongLyrics.com, and then Lyrics.com based on artist and song. Tries several
     different searches, because the match-up is imperfect.
     '''
-    #L_1.get_lyrics(start=0, end=None, input_filename='../data/billboard_tracks.pkl')
+    L_1.get_lyrics(start=0, end=None, input_filename='../data/billboard_tracks.pkl')
 
 
     '''
@@ -146,10 +154,63 @@ if __name__ == '__main__':
     number of SDs above or below the mean it was, relative to songs that were popular around
     the same time.
     '''
-    #Note: code needs to be slightly re-written to adapt it from my ipython notebook
+    input_data = '../data/BB_100_1955_EN_L_merged.pkl'
+    df = pd.read_pickle(input_data)
 
+    col_list = ['energy',
+         'liveness',
+         'tempo',
+         'mode',
+         'acousticness',
+         'instrumentalness',
+         'danceability',
+         'duration',
+         'loudness',
+         'valence',
+         'speechiness',
+         'bars_confidence_mean',
+         'bars_confidence_sd',
+         'bars_duration_sd',
+         'beats_confidence_mean',
+         'beats_confidence_sd',
+         'beats_duration_mean',
+         'beats_duration_sd',
+         'num_keys',
+         'num_sections',
+         'segment_loudness_sd',
+         'tatums_confidence_mean',
+         'tatums_confidence_sd',
+         'tatums_duration_sd',
+         'timbre_01_mean',
+         'timbre_01_sd',
+         'timbre_02_mean',
+         'timbre_02_sd',
+         'timbre_03_mean',
+         'timbre_03_sd',
+         'timbre_04_mean',
+         'timbre_04_sd',
+         'timbre_05_mean',
+         'timbre_05_sd',
+         'timbre_06_mean',
+         'timbre_06_sd',
+         'timbre_07_mean',
+         'timbre_07_sd',
+         'timbre_08_mean',
+         'timbre_08_sd',
+         'timbre_09_mean',
+         'timbre_09_sd',
+         'timbre_10_mean',
+         'timbre_10_sd',
+         'timbre_11_mean',
+         'timbre_11_sd',
+         'timbre_12_mean',
+         'timbre_12_sd']
 
-    ### EDA ###
+    df_sim = CalcSim.sim_calc(df, col_list)
 
 
     ### MODELLING ###
+
+    '''
+    'ML Models.ipynb' runs the three ML models, using code in modules RunModel.py and CleanData.py
+    '''

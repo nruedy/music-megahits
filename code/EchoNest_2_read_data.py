@@ -1,3 +1,8 @@
+'''
+Reads Echo Nest features from JSON files and saves as pickled dataframe.
+'''
+
+
 import pandas as pd
 import numpy as np
 import json
@@ -6,11 +11,13 @@ from collections import defaultdict
 from timeit import default_timer as timer
 
 
+# TODO: Refactor for efficiency - perhaps write to a dict instead of a dataframe.
 def load_data(data_dir='../data/echonest/', output_filename='EN_features.pkl', start_index=0, end_index=None):
     '''
+    Pickles dataframe
+
     INPUTS: Path to data directory, filename for output pickle
     OUTPUTS: None
-    DESC: Pickles dataframe
     '''
     start_time = timer()
     df = pd.DataFrame()

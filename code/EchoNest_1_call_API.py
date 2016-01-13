@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+'''
+Calls Echo Nest API to collect features for songs.
+'''
+
+
 import json
 import pandas as pd
 import datetime
@@ -11,7 +16,6 @@ import Billboard_3a_clean_track_data_16_01_01b as BBclean
 import re
 
 
-
 timeout_sec = 20  # set timeout parameter for echonest song.search() and requests.get()
 config.CALL_TIMEOUT = timeout_sec
 
@@ -19,7 +23,8 @@ class EchonestGetter(object):
     '''
     INPUTS: artist and song search terms
     OUTPUTS: None
-    DESC: writes a json file with track information
+
+    Writes a json file with track information.
     '''
     def __init__(self, artist, song, filename, tmstmp, track_num):
         self._artist = artist
@@ -38,9 +43,11 @@ class EchonestGetter(object):
             with open('../data/echonest_error_logs/echonest_errors.csv', 'a') as outfile:
                 outfile.write(self._artist + '`' + self._song + '`' + 'Exc 1: ' + str(inst) +
                                 '`' + self._tmstmp + '\n')
+            # sleep due to API call limits (120/sec)
             time.sleep(1.0/3.0)
 
         return search_results
+
 
     def getdata(self):
         filepath = '../data/echonest/{0}.json'.format(self._filename)
@@ -181,6 +188,7 @@ def get_API_data(start=0, end=None, input_filename='../data/billboard_tracks.pkl
         echonest_getter = EchonestGetter(track_tuple[0], track_tuple[1], track_tuple[2], tmstmp, count)
         echonest_getter.getdata()
 
+        # provide output while running
         if count % 20 == 0:
             downloaded_prev = downloaded
             downloaded = len(os.walk(EN_path).next()[2])
@@ -189,8 +197,6 @@ def get_API_data(start=0, end=None, input_filename='../data/billboard_tracks.pkl
                                                                      downloaded - downloaded_prev,
                                                                      downloaded - downloaded_start)
         count += 1
-
-
 
 
 if __name__ == '__main__':
