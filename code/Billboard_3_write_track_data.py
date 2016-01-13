@@ -1,10 +1,22 @@
 # -*- coding: utf-8 -*-
+'''
+This file collapses the Billboard data based on a unique song & artist combination
+First, it cleans/standardizes the strings for artist and song. This is important,
+because otherwise one song would have two separate entries, and the number of weeks
+that song was in the charts would be divided between the two entries.
+
+Each unique song-artist combination is used as a filename in later scripts which
+scrape for Echo Nest data and song lyrics. In case cleaning of the Billboard data
+takes place after these filenames have been created, this file provides a mechanism
+to update the previous filenames with the new ones, and delete any duplicates.
+'''
+
+
 import pandas as pd
 import datetime
 import re
 import Billboard_3a_clean_track_data_16_01_01 as previous_cleaning
 import Billboard_3a_clean_track_data_16_01_01b as current_cleaning
-
 
 
 # set path for input data
@@ -17,6 +29,9 @@ def aggregate_by_track(pickled_df_name='billboard_tracks.pkl', max_pos=200, firs
     '''
     INPUT: billboard data at the weekly level (week, artist, song, position)
     OUTPUT: data file aggregated by track (i.e., song/artist combination), and pickled dataframe
+
+    Cleans billboard artist and song names, and then collapses by artist and song, to aggregate
+    data for each track.
     '''
     # read in week-level data
     df = pd.read_csv(weekly_data_filename, sep='|', names=['date','pos','song','artist'])
@@ -42,6 +57,7 @@ def aggregate_by_track(pickled_df_name='billboard_tracks.pkl', max_pos=200, firs
     df['prev_artist_clean'] = df.artist.map(previous_cleaning.clean_artist)
     df['prev_song_clean'] = df.song.map(previous_cleaning.clean_song)
     df['prev_filename'] = df.prev_artist_clean + '___' + df.prev_song_clean
+
     # save old and new filenames to use when cleaning up EN files
     filenames = df.groupby(['prev_filename']).agg({'filename' : min})
     filenames.rename(columns={'filename_min': 'filename'}, inplace=True)
@@ -55,10 +71,8 @@ def aggregate_by_track(pickled_df_name='billboard_tracks.pkl', max_pos=200, firs
     # create dataframe, collapsed by track
     tracks = create_table(df, ['artist_clean', 'song_clean'])
 
-    # save as csv
+    # save data files
     tracks.to_csv(output_filename, sep='|')
-
-    # save pickled dataframe
     tracks.to_pickle('../data/' + pickled_df_name)
 
 
@@ -67,8 +81,9 @@ def create_table(df, col_list):
     '''
     INPUT: Pandas DataFrame, list of columns to group by
     OUTPUT: Pandas DataFrame
-    DESC: Groups original data by artist and song, calculates summary data, and
-        sorts by number of weeks in the top "N"
+
+    Groups original data by artist and song, calculates summary data, and
+    sorts by number of weeks in the top "N"
     '''
     grouped = df.groupby(col_list).agg({'pos' : [min, max, tup],
                                         'date' : [min, max, tup],
