@@ -6,7 +6,7 @@ In this project, I analyze audio features of hit pop songs in order to answer th
 ### Data Collection
 
 #### Billboard Data
-![alt text](https://github.com/nruedy/music-megahits/images/Billboard.png "Billboard Logo")
+![Image Not Found](https://github.com/nruedy/music-megahits/blob/master/images/Billboard.png "Billboard Logo")
 1. I built a scraper for the Billboard Top 100 Pop singles chart.
 
 2. I cleaned the data extensively. This was important because songs and artists were often listed in two different ways (e.g., "Living on a Prayer" vs. "Livin' on a Prayer".)
@@ -16,7 +16,7 @@ In this project, I analyze audio features of hit pop songs in order to answer th
 4. I defined a hit as a song that was on the charts for more than 20 weeks, and a flop as one that was on for five weeks or fewer. I also restricted the data set to the years 1980-2005, because this was a period where the ratio of hits to flops was fairly stable.
 
 #### Echo Nest Data
-![alt text](https://github.com/nruedy/music-megahits/images/EchoNest.png "Echo Nest Logo")
+![Image Not Found](https://github.com/nruedy/music-megahits/blob/master/images/EchoNest.png "Echo Nest Logo")
 1. For the audio features, I used Echo Nest’s API, which provides an extensive list of features available by song. For a search on Echo Nest's API to produce a result, both the song and artist names must match. Unfortunately, Echo Nest and Billboard often list songs and artists differently, and if either does not match, the search will be unsuccessful. To address this, the module I wrote to call Echo Nest's API tries a number of transformations on the song and artist name from Billboard. For instance, if searching for a song/artist combination does not produce any results, the module will try variations on the song and artist name, for instance, removing 'the' or 'a' if they are present. In other words, if the artist "Eminem" and the song "*The* Real Slim Shady" does not produce any results, the program will also search for "Eminem" and "Real Slim Shady." By trying a number of different transformations, of the approximately 34,000 tracks I searched, I was able to find Echo Nest data for 84%.
 
 2. Echo Nest features are produced using machine learning algorithms. They cover both straightforward aspects of the song, such as the key and time signature, as well as assessments of a song’s more subjective qualities such as danceability and positivity. Echo Nest data comes in JSON format. I parsed these files to extract audio features for each song.
