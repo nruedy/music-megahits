@@ -1,5 +1,5 @@
-## Note on code organization:
+### Notes on code organization:
 
-#### For an outline of code modules, along with descriptions, please see 'Master.py'.
+* For an outline of the data pipeline including descriptions of all modules, please see 'Master.py'
 
-#### For modelling results, see 'notebooks/ML Models.ipynb'
+* Models are run in 'ML Models.ipynb' in the 'notebooks' folder in the main directory.
