@@ -16,7 +16,7 @@ In this project, I analyze audio features of hit pop songs in order to answer th
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="images/EchoNest.png" alt="Image Not Found" width=200>
 <br>
-* For the audio features, I used Echo Nest’s API, which provides an extensive list of features available by song. In order to improve my success rate of retrieving Echo Nest data, the module I wrote to call Echo Nest's API re-tries unsuccessful searches with a number of transformations on the song and artist name from Billboard, e.g. removing punctuation or removing the word 'the.' With this method, I was able to find Echo Nest data for 84% of the ~34,000 tracks I searched.
+* For the audio features, I used Echo Nest’s API, which provides an extensive list of features available by song. However, searching is difficult, because both the song and artist name must match nearly exactly. In order to improve my success rate of retrieving Echo Nest data, the module I wrote to call Echo Nest's API re-tries unsuccessful searches with a number of transformations on the song and artist name from Billboard, e.g. removing punctuation or removing the word 'the.' With this method, I was able to find Echo Nest data for 84% of the ~34,000 tracks I searched.
 
 * Echo Nest features are produced using machine learning algorithms. They cover both straightforward aspects of the song, such as the key and time signature, as well as assessments of a song’s more subjective qualities such as danceability and positivity. Echo Nest data comes in JSON format. I parsed these files to extract audio features for each song.
 
