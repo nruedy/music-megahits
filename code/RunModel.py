@@ -12,12 +12,17 @@ from sklearn.ensemble.partial_dependence import plot_partial_dependence
 # Note: Models are run in 'ML Models' notebook
 
 
+#TODO: Refactor into object-oriented code
 def prep_data(df, X_col_names, scaled=False, threshold_high=20, threshold_low=6):
     '''
-    INPUTS: DataFrame, List of feature names, Bool (Indicate scaling), Int (Threshold for hit),
-    Int (Threshold for non-hit)
-    OUTPUTS: Four Arrays
-    DESC: Produces testing and training features and labels
+    INPUT:  DataFrame
+            List (feature names)
+            Bool (Indicate scaling)
+            Int (Threshold for hit)
+            Int (Threshold for non-hit)
+    OUTPUT: Four Arrays
+
+    Produces testing and training features and labels
     '''
     df_model = df
     # create dichotomous target for number of weeks
@@ -25,8 +30,8 @@ def prep_data(df, X_col_names, scaled=False, threshold_high=20, threshold_low=6)
     # select observations that have a target
     df_model = df[df.wks_class.notnull()]
     print 'Counts for target buckets:'
-    target_one_count = len(df_model[df_model.wks_class==1].index)
-    target_zero_count = len(df_model[df_model.wks_class==0].index)
+    target_one_count = len(df_model[df_model.wks_class == 1].index)
+    target_zero_count = len(df_model[df_model.wks_class == 0].index)
     print 'Number of hits: {0}'.format(target_one_count)
     print 'Number of non-hits: {0}'.format(target_zero_count)
     print ''
@@ -36,16 +41,17 @@ def prep_data(df, X_col_names, scaled=False, threshold_high=20, threshold_low=6)
     X = df_model[X_col_names]
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2, random_state=42)
-    if scaled == True:
+    if scaled:
         X_train, X_test = scale_data(X_train, X_test)
     return X_train, X_test, y_train, y_test
 
 
 def scale_data(X_train, X_test):
     '''
-    INPUTS: Matrix, Matrix
-    OUTPUTS: Matrix, Matrix
-    DESC: Scales train and test data sets based on train set
+    INPUT: Matrix, Matrix
+    OUTPUT: Matrix, Matrix
+
+    Scales train and test data sets based on train set
     '''
     raw_scaler = StandardScaler()
     raw_scaler.fit(X_train)
@@ -56,12 +62,15 @@ def scale_data(X_train, X_test):
 
 def run_model(clf, X_train, X_test, y_train, y_test):
     '''
-    :param clf: classifier
-    :param X_train: Matrix (features)
-    :param X_test: Matrix (features)
-    :param y_train: Matrix (labels)
-    :param y_test: Matrix (labels
-    :return: array (predicted probabilities)
+    INPUT: clf: classifier
+           X_train: Matrix (features)
+           X_test: Matrix (features)
+           y_train: Matrix (labels)
+           y_test: Matrix (labels
+    OUTPUT: array (predicted probabilities)
+
+    Fits model with training set and labels, prints model scores for accuracy and AUC,
+    returns predicted probabilities for test set.
     '''
     clf.fit(X_train, y_train)
     y_prob = clf.predict_proba(X_test)[:, 1]
@@ -71,30 +80,56 @@ def run_model(clf, X_train, X_test, y_train, y_test):
     return y_prob
 
 
-def logit_results(clf, X_col_names, max_predictors_to_print=None):
+def logit_results(clf, X_col_names, num_top_features=10):
     '''
-    :param clf: Classifier
-    :param X_col_names: List of feature names
-    :param max_predictors_to_print: Number of predictors to list in output
-    :return: Coefficient importances
-    '''
+    INPUT: clf: Classifier
+           X_col_names: List of feature names
+           max_predictors_to_print: Number of predictors to list in output
+    OUTPUT: Coefficient importances
 
-    coef_importance = sorted(zip(X_col_names, list(clf.coef_[0])), key=getKey)
+    Sorts coefficients in order of size, and prints out the top N (default is 10) predictors
+    with their coefficients. Note: Data must be scaled.
+    '''
+    # Zips feature names with coefficients. Sortkey takes the absolute value and reverses order
+    # so that largest coefficients are listed first.
+    coef_importance = sorted(zip(X_col_names, list(clf.coef_[0])), key=lambda x: -abs(x[1]))
 
     print 'Top predictors:'
-    for coef in coef_importance[: max_predictors_to_print]:
+    for coef in coef_importance[: num_top_features]:
         print '{0}: {1:.3f}'.format(coef[0], coef[1])
 
     return coef_importance
 
 
+def random_forest_results(clf, X_col_names, num_top_features=10):
+    '''
+    INPUT: clf: Classifier
+           X_col_names: List of feature names
+           max_predictors_to_print: Number of predictors to list in output
+    OUTPUT: Coefficient importances
+
+    Sorts feature importances in order of size, and prints out the top N (default is 10)
+    predictors with their importances.
+    '''
+    # Zips feature names with importances. Sortkey reverses order so that largest are listed first.
+    importances_rf = sorted(zip(X_col_names, clf.feature_importances_), key=lambda x: -x[1])
+
+    print 'Top features:'
+    for feat in importances_rf[: num_top_features]:
+        print '{0}: {1:.3f}'.format(feat[0], feat[1])
+
+    return importances_rf
+
+
 def grad_boost_classifier_results(clf, X_train, X_col_names, num_top_features=10):
     '''
-    :param clf: Classifier
-    :param X_train: Matrix
-    :param X_col_names: List of feature names
-    :param num_top_features: Number of features for which to pring output
-    :return:
+    INPUT: clf: Classifier
+           X_train: Matrix
+           X_col_names: List of feature names
+           num_top_features: Number of features for which to print output
+    OUTPUT: list of tuples (predictor name, coefficient)
+
+    Sorts the importances and plots partial dependence for top N features (default = 10).
     '''
     importances = pd.Series(clf.feature_importances_, index=X_col_names)
     importances.sort(ascending=False)
@@ -109,10 +144,12 @@ def grad_boost_classifier_results(clf, X_train, X_col_names, num_top_features=10
 
 def wks_bucket(num_wks, threshold_high, threshold_low):
     '''
-    :param num_wks: Number of weeks song was in the Billboard Chart
-    :param threshold_high: Threshold for long-running song
-    :param threshold_low: Threshold for a short-running song
-    :return: label value
+    INPUT:  num_wks: int, Number of weeks song was in the Billboard Chart
+            threshold_high: int, Threshold for long-running song
+            threshold_low: int, Threshold for a short-running song
+    OUTPUT: 1 or 0, label value
+
+    Assigns a label based on how many weeks a song has been on the charts.
     '''
     if num_wks > threshold_high:
         return 1
@@ -120,13 +157,6 @@ def wks_bucket(num_wks, threshold_high, threshold_low):
         return 0
     return None
 
-
-def getKey(item):
-    '''
-    :param item: tuple of feature name and feature importance
-    :return: key to sort by
-    '''
-    return -abs(item[1])
 
 
 
